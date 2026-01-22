@@ -1,0 +1,74 @@
+🔹 System Update & Installation
+sudo apt update
+sudo apt upgrade -y
+
+1️⃣ Firewall Configuration (iptables)
+sudo iptables -L
+sudo iptables -F
+
+sudo iptables -P INPUT DROP
+sudo iptables -P FORWARD DROP
+sudo iptables -P OUTPUT ACCEPT
+
+sudo iptables -A INPUT -i lo -j ACCEPT
+sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+sudo iptables -A INPUT -p icmp --icmp-type echo-request -j DROP
+sudo iptables -A INPUT -p udp --dport 1194 -j ACCEPT
+sudo iptables -A INPUT -s 192.168.111.150 -j DROP
+
+2️⃣ Network Information
+ip a
+
+3️⃣ Snort IDS / IPS Setup
+sudo apt install snort -y
+sudo nano /etc/snort/snort.conf
+sudo snort -T -c /etc/snort/snort.conf
+sudo snort -A console -q -c /etc/snort/snort.conf -i eth0
+sudo snort -Q --daq afpacket -c /etc/snort/snort.conf -i eth0
+
+4️⃣ Attack Simulation (Testing IDS/IPS)
+nmap -sS 192.168.111.137
+nmap -A 192.168.111.137/24
+hping3 --flood 192.168.111.137
+
+5️⃣ OpenVPN Installation & Setup
+sudo apt install openvpn easy-rsa -y
+make-cadir ~/openvpn-ca
+cd ~/openvpn-ca
+source vars
+./clean-all
+./build-ca
+./build-key-server server
+./build-dh
+
+6️⃣ OpenVPN Configuration
+sudo nano /etc/openvpn/server/server.conf
+sudo systemctl start openvpn-server@server
+sudo systemctl restart openvpn-server@server
+sudo systemctl status openvpn-server@server
+sudo journalctl -u openvpn-server@server --no-pager -n 20
+
+7️⃣ OpenVPN Client Connection
+nano ~/client.ovpn
+sudo openvpn --config ~/client.ovpn
+
+8️⃣ Traffic Monitoring
+sudo wireshark
+sudo tshark -i eth0
+
+9️⃣ System & Service Debugging
+ls ~/openvpn-ca
+ls ~/openvpn-ca/pki
+ls ~/openvpn-ca/pki/issued
+ls ~/openvpn-ca/pki/private
+sudo ss -u -lpn | grep 1194
+sudo systemctl daemon-reload
+sudo systemctl daemon-reexec
+
+🔟 Incident Response
+sudo iptables -A INPUT -s <attacker_ip> -j DROP
